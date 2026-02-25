@@ -4,10 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowRight, Info } from "lucide-react";
+import { ArrowRight, ClipboardCopy, Download, Upload, Printer, Monitor, Unplug, Database } from "lucide-react";
 import { useAnalysis } from "@/lib/analysisContext";
 import { countVectors } from "@/lib/saasApps";
 import type { AccessTier, UserTier, DeviceTrust } from "@shared/schema";
+
+const vectorLabels = [
+  { key: "clipboardPaste" as const, label: "Clipboard", icon: ClipboardCopy },
+  { key: "fileDownload" as const, label: "Download", icon: Download },
+  { key: "fileUpload" as const, label: "Upload", icon: Upload },
+  { key: "printCapable" as const, label: "Print", icon: Printer },
+  { key: "screenCapturable" as const, label: "Screen Capture", icon: Monitor },
+  { key: "apiExport" as const, label: "API Export", icon: Unplug },
+  { key: "bulkDataExport" as const, label: "Bulk Export", icon: Database },
+];
 
 const tierLabels: Record<AccessTier, string> = {
   native: "Native", secure_browser: "Secure Browser", full_daas: "Full DaaS",
@@ -131,8 +141,29 @@ export default function RiskHeatmap() {
                 <tr key={app.id} className={`border-b last:border-0 ${i % 2 === 1 ? "bg-muted/15" : ""}`}>
                   <td className="px-3 py-2 sticky left-0 bg-card z-10">
                     <div className="font-medium text-[12px]">{app.name}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      {app.category} | {countVectors(app.exfiltrationVectors)} vectors
+                    <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <span>{app.category}</span>
+                      <span>|</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help underline decoration-dotted underline-offset-2">{countVectors(app.exfiltrationVectors)}/7 vectors</span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="w-52 p-0">
+                          <div className="px-3 py-2 border-b text-[11px] font-medium">{app.name} - Vectors</div>
+                          <div className="px-3 py-1.5 space-y-1">
+                            {vectorLabels.map(v => {
+                              const active = app.exfiltrationVectors[v.key];
+                              return (
+                                <div key={v.key} className={`flex items-center gap-2 text-[11px] ${active ? "" : "opacity-30"}`}>
+                                  <v.icon className="w-3 h-3 shrink-0" />
+                                  <span className="flex-1">{v.label}</span>
+                                  <span className={`text-[10px] font-mono ${active ? "text-red-500" : "text-muted-foreground"}`}>{active ? "YES" : "NO"}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </td>
                   {contextCombinations.map(combo => {

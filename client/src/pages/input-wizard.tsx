@@ -8,10 +8,12 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import {
   Building2, Users, ShieldCheck, AppWindow, Settings2, ArrowRight, ArrowLeft,
-  Search, CheckCircle2, AlertTriangle, Zap, ChevronRight, Play
+  Search, CheckCircle2, AlertTriangle, Zap, ChevronRight, Play,
+  ClipboardCopy, Download, Upload, Printer, Monitor, Unplug, Database
 } from "lucide-react";
 import { useAnalysis } from "@/lib/analysisContext";
 import { saasApps, appCategories, countVectors } from "@/lib/saasApps";
@@ -19,6 +21,16 @@ import type {
   OrganizationProfile, AccessScenario, SaaSApp, Industry,
   ComplianceFramework, AppCategory
 } from "@shared/schema";
+
+const vectorLabels = [
+  { key: "clipboardPaste" as const, label: "Clipboard", icon: ClipboardCopy },
+  { key: "fileDownload" as const, label: "Download", icon: Download },
+  { key: "fileUpload" as const, label: "Upload", icon: Upload },
+  { key: "printCapable" as const, label: "Print", icon: Printer },
+  { key: "screenCapturable" as const, label: "Screen Capture", icon: Monitor },
+  { key: "apiExport" as const, label: "API Export", icon: Unplug },
+  { key: "bulkDataExport" as const, label: "Bulk Export", icon: Database },
+];
 
 const industries: Industry[] = ["Healthcare", "Finance", "Government", "Technology", "Education", "Retail", "Other"];
 const complianceOptions: ComplianceFramework[] = ["SOC2", "HIPAA", "PCI-DSS", "FedRAMP", "GDPR"];
@@ -301,11 +313,30 @@ function AppSelectionStep({
                   <span className="font-medium">{app.name}</span>
                   <span className="text-muted-foreground ml-2 text-[10px]">{app.category}</span>
                 </div>
-                <span className={`text-center w-20 font-mono text-[11px] ${
-                  vectors >= 6 ? "text-red-500" : vectors >= 4 ? "text-amber-500" : "text-emerald-500"
-                }`}>
-                  {vectors}/7
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={`text-center w-20 font-mono text-[11px] cursor-help underline decoration-dotted underline-offset-2 ${
+                      vectors >= 6 ? "text-red-500" : vectors >= 4 ? "text-amber-500" : "text-emerald-500"
+                    }`} onClick={(e) => e.stopPropagation()}>
+                      {vectors}/7
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="w-52 p-0">
+                    <div className="px-3 py-2 border-b text-[11px] font-medium">Exfiltration Vectors</div>
+                    <div className="px-3 py-1.5 space-y-1">
+                      {vectorLabels.map(v => {
+                        const active = app.exfiltrationVectors[v.key];
+                        return (
+                          <div key={v.key} className={`flex items-center gap-2 text-[11px] ${active ? "" : "opacity-30"}`}>
+                            <v.icon className="w-3 h-3 shrink-0" />
+                            <span className="flex-1">{v.label}</span>
+                            <span className={`text-[10px] font-mono ${active ? "text-red-500" : "text-muted-foreground"}`}>{active ? "YES" : "NO"}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
                 <span className="text-right w-24 text-[10px] text-muted-foreground">{app.dataClassification}</span>
               </div>
             );
