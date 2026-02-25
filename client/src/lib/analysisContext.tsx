@@ -10,10 +10,7 @@ interface AnalysisState {
   selectedApps: SaaSApp[];
   result: AnalysisResult | null;
   currentStep: number;
-  setOrganization: (org: OrganizationProfile) => void;
-  setScenario: (scenario: AccessScenario) => void;
-  setSelectedApps: (apps: SaaSApp[]) => void;
-  runAnalysis: () => void;
+  analyze: (org: OrganizationProfile, scenario: AccessScenario, apps: SaaSApp[]) => void;
   setCurrentStep: (step: number) => void;
   reset: () => void;
 }
@@ -27,12 +24,13 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
 
-  const runAnalysis = useCallback(() => {
-    if (organization && scenario && selectedApps.length > 0) {
-      const analysisResult = runFullAnalysis(organization, scenario, selectedApps);
-      setResult(analysisResult);
-    }
-  }, [organization, scenario, selectedApps]);
+  const analyze = useCallback((org: OrganizationProfile, sc: AccessScenario, apps: SaaSApp[]) => {
+    setOrganization(org);
+    setScenario(sc);
+    setSelectedApps(apps);
+    const analysisResult = runFullAnalysis(org, sc, apps);
+    setResult(analysisResult);
+  }, []);
 
   const reset = useCallback(() => {
     setOrganization(null);
@@ -46,8 +44,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     <AnalysisContext.Provider
       value={{
         organization, scenario, selectedApps, result, currentStep,
-        setOrganization, setScenario, setSelectedApps,
-        runAnalysis, setCurrentStep, reset,
+        analyze, setCurrentStep, reset,
       }}
     >
       {children}

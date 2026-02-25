@@ -425,7 +425,7 @@ function ScenarioStep({
 }
 
 export default function InputWizard() {
-  const { setOrganization, setScenario, setSelectedApps, runAnalysis, setCurrentStep } = useAnalysis();
+  const { analyze, setCurrentStep } = useAnalysis();
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -450,13 +450,10 @@ export default function InputWizard() {
 
   const handleAnalyze = () => {
     setIsAnalyzing(true);
-    setOrganization(org);
-    setScenario(scenario);
     const apps = saasApps.filter(a => selectedAppIds.has(a.id));
-    setSelectedApps(apps);
 
     setTimeout(() => {
-      runAnalysis();
+      analyze(org, scenario, apps);
       setCurrentStep(1);
       setIsAnalyzing(false);
       navigate("/heatmap");
