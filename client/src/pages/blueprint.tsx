@@ -1,10 +1,7 @@
 import { useRef, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Printer, Shield, TrendingDown, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
+import { Printer, Shield, TrendingDown, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useAnalysis } from "@/lib/analysisContext";
 import { countVectors } from "@/lib/saasApps";
 import type { AccessTier } from "@shared/schema";
@@ -26,9 +23,7 @@ export default function Blueprint() {
 
   const { organization, decisions, selectedApps, totalAnnualCost, blanketVDICost, totalAnnualSavings, riskSummary } = result;
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => { window.print(); };
 
   const topRiskApps = useMemo(() => {
     const appMaxRisk = new Map<string, number>();
@@ -57,225 +52,179 @@ export default function Blueprint() {
   const savingsPercent = blanketVDICost > 0 ? Math.round((totalAnnualSavings / blanketVDICost) * 100) : 0;
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-start justify-between gap-4 flex-wrap print:hidden">
+    <div className="p-4 md:p-5 max-w-4xl mx-auto space-y-4">
+      <div className="flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Secure Access Blueprint</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Exportable summary document for your CISO. Use the print button to generate a PDF.
+          <h1 className="text-lg font-semibold tracking-tight">Secure Access Blueprint</h1>
+          <p className="text-muted-foreground text-[12px] mt-0.5">
+            Exportable summary for your CISO. Print to generate a PDF.
           </p>
         </div>
-        <Button onClick={handlePrint} data-testid="button-print">
-          <Printer className="w-4 h-4 mr-2" /> Print / Export PDF
+        <Button size="sm" onClick={handlePrint} data-testid="button-print" className="text-[12px] h-8">
+          <Printer className="w-3.5 h-3.5 mr-1.5" /> Print / PDF
         </Button>
       </div>
 
-      <div ref={printRef} className="space-y-6 print:space-y-4">
-        <div className="border rounded-md p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center print:bg-blue-600">
-              <Shield className="w-5 h-5 text-primary-foreground" />
+      <div ref={printRef} className="space-y-0 print:space-y-0">
+        <div className="border rounded bg-card">
+          <div className="px-5 py-4 border-b flex items-center gap-3">
+            <div className="w-9 h-9 rounded bg-[hsl(36,100%,50%)] flex items-center justify-center print:bg-orange-500">
+              <Shield className="w-4 h-4 text-[hsl(214,40%,12%)]" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Secure Access Blueprint</h2>
-              <p className="text-sm text-muted-foreground">{organization.name} | Generated {new Date().toLocaleDateString()}</p>
+              <h2 className="text-base font-semibold">Secure Access Blueprint</h2>
+              <p className="text-[11px] text-muted-foreground">{organization.name} | {new Date().toLocaleDateString()}</p>
             </div>
           </div>
 
-          <Separator />
-
-          <div>
-            <h3 className="font-semibold text-base mb-2">Executive Summary</h3>
-            <p className="text-sm leading-relaxed">
+          <div className="px-5 py-4 border-b">
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Executive Summary</div>
+            <p className="text-[12px] leading-relaxed">
               {organization.name} uses <strong>{selectedApps.length} SaaS applications</strong> across
               a workforce of <strong>{organization.workforceSize.toLocaleString()} users</strong> ({organization.employeePercent}% employees,
               {organization.contractorPercent}% contractors, {organization.vendorPercent}% vendors).
-              Our analysis identified <strong>{riskSummary.totalExfiltrationVectors} exfiltration vectors</strong> across
-              {decisions.length} access scenarios. By implementing an optimized WorkSpaces access tier strategy,
-              {organization.name} can <strong>save ${totalAnnualSavings.toLocaleString()}/year ({savingsPercent}% reduction)</strong> compared
-              to blanket VDI deployment while maintaining compliance with {organization.complianceFrameworks.join(", ")} requirements.
+              Analysis identified <strong>{riskSummary.totalExfiltrationVectors} exfiltration vectors</strong> across
+              {decisions.length} access scenarios. Optimized WorkSpaces strategy yields <strong>${totalAnnualSavings.toLocaleString()}/year savings ({savingsPercent}% reduction)</strong> vs.
+              blanket VDI, maintaining {organization.complianceFrameworks.join(", ")} compliance.
             </p>
           </div>
 
-          <Separator />
-
-          <div>
-            <h3 className="font-semibold text-base mb-3">Risk Overview</h3>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 rounded-md bg-emerald-500/10 text-center">
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{riskSummary.nativeCount}</div>
-                <div className="text-xs text-muted-foreground">Native Access</div>
-                <div className="text-[10px] text-muted-foreground">$0/user/mo</div>
+          <div className="px-5 py-4 border-b">
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Risk Overview</div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="border rounded p-3 text-center">
+                <div className="text-2xl font-semibold font-mono text-emerald-600 dark:text-emerald-400">{riskSummary.nativeCount}</div>
+                <div className="text-[11px] text-muted-foreground">Native Access</div>
+                <div className="text-[10px] font-mono text-muted-foreground">$0/user/mo</div>
               </div>
-              <div className="p-3 rounded-md bg-amber-500/10 text-center">
-                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{riskSummary.secureBrowserCount}</div>
-                <div className="text-xs text-muted-foreground">Secure Browser</div>
-                <div className="text-[10px] text-muted-foreground">$7/user/mo</div>
+              <div className="border rounded p-3 text-center">
+                <div className="text-2xl font-semibold font-mono text-amber-600 dark:text-amber-400">{riskSummary.secureBrowserCount}</div>
+                <div className="text-[11px] text-muted-foreground">Secure Browser</div>
+                <div className="text-[10px] font-mono text-muted-foreground">$7/user/mo</div>
               </div>
-              <div className="p-3 rounded-md bg-red-500/10 text-center">
-                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{riskSummary.fullDaaSCount}</div>
-                <div className="text-xs text-muted-foreground">Full DaaS</div>
-                <div className="text-[10px] text-muted-foreground">$35/user/mo</div>
+              <div className="border rounded p-3 text-center">
+                <div className="text-2xl font-semibold font-mono text-red-600 dark:text-red-400">{riskSummary.fullDaaSCount}</div>
+                <div className="text-[11px] text-muted-foreground">Full DaaS</div>
+                <div className="text-[10px] font-mono text-muted-foreground">$35/user/mo</div>
               </div>
             </div>
           </div>
 
-          <Separator />
-
-          <div>
-            <h3 className="font-semibold text-base mb-3">Recommended Architecture</h3>
+          <div className="px-5 py-4 border-b">
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Recommended Architecture</div>
             <div className="space-y-3">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <span className="text-sm font-medium">Native Access (No Intervention)</span>
-                </div>
-                <div className="ml-6 flex flex-wrap gap-1">
-                  {[...tierDistribution.native].slice(0, 8).map(name => (
-                    <Badge key={name} variant="secondary" className="text-[10px]">{name}</Badge>
-                  ))}
-                  {tierDistribution.native.size > 8 && (
-                    <Badge variant="secondary" className="text-[10px]">+{tierDistribution.native.size - 8} more</Badge>
-                  )}
-                  {tierDistribution.native.size === 0 && (
-                    <span className="text-xs text-muted-foreground">No apps qualified for native access</span>
-                  )}
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-medium">AWS Secure Browser ($7/mo per user)</span>
-                </div>
-                <div className="ml-6 flex flex-wrap gap-1">
-                  {[...tierDistribution.secure_browser].slice(0, 8).map(name => (
-                    <Badge key={name} variant="secondary" className="text-[10px]">{name}</Badge>
-                  ))}
-                  {tierDistribution.secure_browser.size > 8 && (
-                    <Badge variant="secondary" className="text-[10px]">+{tierDistribution.secure_browser.size - 8} more</Badge>
-                  )}
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Shield className="w-4 h-4 text-red-500" />
-                  <span className="text-sm font-medium">AWS WorkSpaces DaaS ($35/mo per user)</span>
-                </div>
-                <div className="ml-6 flex flex-wrap gap-1">
-                  {[...tierDistribution.full_daas].slice(0, 8).map(name => (
-                    <Badge key={name} variant="secondary" className="text-[10px]">{name}</Badge>
-                  ))}
-                  {tierDistribution.full_daas.size > 8 && (
-                    <Badge variant="secondary" className="text-[10px]">+{tierDistribution.full_daas.size - 8} more</Badge>
-                  )}
-                  {tierDistribution.full_daas.size === 0 && (
-                    <span className="text-xs text-muted-foreground">No apps required full DaaS</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div>
-            <h3 className="font-semibold text-base mb-3">Cost Summary</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 border rounded-md">
-                <div className="text-xs text-muted-foreground mb-1">Blanket VDI Deployment</div>
-                <div className="text-xl font-bold text-red-600 dark:text-red-400">${blanketVDICost.toLocaleString()}/yr</div>
-                <div className="text-xs text-muted-foreground">{organization.workforceSize.toLocaleString()} users x $35/mo x 12</div>
-              </div>
-              <div className="p-4 border rounded-md">
-                <div className="text-xs text-muted-foreground mb-1">Optimized WorkSpaces Mix</div>
-                <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">${totalAnnualCost.toLocaleString()}/yr</div>
-                <div className="text-xs text-muted-foreground">Right-sized per app + user context</div>
-              </div>
-            </div>
-            <div className="mt-3 p-4 bg-emerald-500/10 rounded-md text-center">
-              <div className="flex items-center justify-center gap-2">
-                <TrendingDown className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                  Annual Savings: ${totalAnnualSavings.toLocaleString()} ({savingsPercent}%)
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div>
-            <h3 className="font-semibold text-base mb-3">Top 10 Highest Risk Applications</h3>
-            <div className="space-y-2">
-              {topRiskApps.map(({ app, maxRisk }) => (
-                <div key={app.id} className="flex items-center justify-between gap-2 p-2 rounded-md bg-muted/30">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm font-medium truncate">{app.name}</span>
-                    <Badge variant="secondary" className="text-[10px] shrink-0">{app.category}</Badge>
+              {[
+                { icon: CheckCircle2, color: "text-emerald-500", label: "Native Access (No Intervention)", apps: tierDistribution.native, emptyMsg: "No apps qualified for native access" },
+                { icon: AlertTriangle, color: "text-amber-500", label: "AWS Secure Browser ($7/mo per user)", apps: tierDistribution.secure_browser, emptyMsg: "" },
+                { icon: Shield, color: "text-red-500", label: "AWS WorkSpaces DaaS ($35/mo per user)", apps: tierDistribution.full_daas, emptyMsg: "No apps required full DaaS" },
+              ].map(tier => (
+                <div key={tier.label}>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <tier.icon className={`w-3.5 h-3.5 ${tier.color}`} />
+                    <span className="text-[12px] font-medium">{tier.label}</span>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-muted-foreground">{countVectors(app.exfiltrationVectors)}/7 vectors</span>
-                    <span className={`text-xs font-bold ${maxRisk >= 46 ? "text-red-500" : maxRisk >= 21 ? "text-amber-500" : "text-emerald-500"}`}>
-                      Score: {maxRisk}
-                    </span>
+                  <div className="ml-5 flex flex-wrap gap-1">
+                    {[...tier.apps].slice(0, 8).map(name => (
+                      <span key={name} className="px-1.5 py-0.5 rounded bg-muted text-[10px]">{name}</span>
+                    ))}
+                    {tier.apps.size > 8 && <span className="px-1.5 py-0.5 rounded bg-muted text-[10px]">+{tier.apps.size - 8} more</span>}
+                    {tier.apps.size === 0 && tier.emptyMsg && <span className="text-[11px] text-muted-foreground">{tier.emptyMsg}</span>}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {uniqueCompliance.length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <h3 className="font-semibold text-base mb-3">Compliance Gaps Addressed</h3>
-                <div className="flex flex-wrap gap-2">
-                  {uniqueCompliance.map(gap => (
-                    <Badge key={gap} variant="secondary">
-                      <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-500" />
-                      {gap}
-                    </Badge>
-                  ))}
-                </div>
+          <div className="px-5 py-4 border-b">
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">Cost Summary</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="border rounded p-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Blanket VDI</div>
+                <div className="text-lg font-semibold font-mono text-red-600 dark:text-red-400">${blanketVDICost.toLocaleString()}/yr</div>
+                <div className="text-[10px] font-mono text-muted-foreground">{organization.workforceSize.toLocaleString()} users x $35/mo x 12</div>
               </div>
-            </>
+              <div className="border rounded p-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Optimized Mix</div>
+                <div className="text-lg font-semibold font-mono text-emerald-600 dark:text-emerald-400">${totalAnnualCost.toLocaleString()}/yr</div>
+                <div className="text-[10px] font-mono text-muted-foreground">Right-sized per app + context</div>
+              </div>
+            </div>
+            <div className="mt-2 p-3 border rounded border-emerald-500/30 bg-emerald-500/5 text-center">
+              <div className="flex items-center justify-center gap-1.5">
+                <TrendingDown className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-[14px] font-semibold font-mono text-emerald-600 dark:text-emerald-400">
+                  Annual Savings: ${totalAnnualSavings.toLocaleString()} ({savingsPercent}%)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-4 border-b">
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Top 10 Highest Risk Applications</div>
+            <div className="border rounded overflow-hidden">
+              <div className="grid grid-cols-[1fr_auto_auto] text-[10px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/30 px-3 py-1.5 border-b">
+                <span>Application</span>
+                <span className="w-20 text-center">Vectors</span>
+                <span className="w-16 text-right">Score</span>
+              </div>
+              {topRiskApps.map(({ app, maxRisk }) => (
+                <div key={app.id} className="grid grid-cols-[1fr_auto_auto] items-center px-3 py-1.5 border-b last:border-0 text-[12px]">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium truncate">{app.name}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{app.category}</span>
+                  </div>
+                  <span className="w-20 text-center font-mono text-[11px] text-muted-foreground">{countVectors(app.exfiltrationVectors)}/7</span>
+                  <span className={`w-16 text-right font-mono font-semibold text-[11px] ${maxRisk >= 46 ? "text-red-500" : maxRisk >= 21 ? "text-amber-500" : "text-emerald-500"}`}>
+                    {maxRisk}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {uniqueCompliance.length > 0 && (
+            <div className="px-5 py-4 border-b">
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Compliance Gaps Addressed</div>
+              <div className="flex flex-wrap gap-1.5">
+                {uniqueCompliance.map(gap => (
+                  <span key={gap} className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[11px]">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    {gap}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
 
-          <Separator />
-
-          <div>
-            <h3 className="font-semibold text-base mb-3">Recommended Next Steps</h3>
-            <ol className="space-y-2 text-sm list-decimal list-inside">
+          <div className="px-5 py-4 border-b">
+            <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Recommended Next Steps</div>
+            <ol className="space-y-1.5 text-[12px] list-decimal list-inside leading-relaxed">
               <li>
-                <strong>Pilot Secure Browser</strong> with your contractor population
-                ({organization.contractorPercent}% of workforce) on highest-risk SaaS apps. Estimated pilot cost:
-                ${Math.round(organization.workforceSize * organization.contractorPercent / 100 * 7)}/mo.
+                <strong>Pilot Secure Browser</strong> with contractor population
+                ({organization.contractorPercent}% of workforce) on highest-risk apps. Est. pilot: ${Math.round(organization.workforceSize * organization.contractorPercent / 100 * 7)}/mo.
               </li>
               <li>
-                <strong>Extend to remote employees</strong> accessing confidential or restricted data.
+                <strong>Extend to remote employees</strong> accessing confidential/restricted data.
                 Enable DLP controls for clipboard, file transfer, and print.
               </li>
               <li>
                 <strong>Evaluate Full DaaS</strong> for power users requiring local OS integration
-                (CAD, IDE, analytics desktop apps). Consider AutoStop pricing for part-time users.
+                (CAD, IDE, analytics). Consider AutoStop pricing.
               </li>
               <li>
-                <strong>Integrate with existing CASB</strong> (if applicable) to automate SaaS discovery
-                and continuous policy updates as new shadow IT apps are detected.
+                <strong>Integrate with CASB</strong> to automate SaaS discovery and continuous policy updates.
               </li>
               <li>
-                <strong>Schedule architecture review</strong> with AWS Solutions Architect to finalize
-                deployment plan, identity federation, and network connectivity requirements.
+                <strong>Schedule architecture review</strong> with AWS Solutions Architect for deployment,
+                identity federation, and network connectivity.
               </li>
             </ol>
           </div>
 
-          <Separator />
-
-          <div className="text-xs text-muted-foreground text-center space-y-1">
+          <div className="px-5 py-3 text-[10px] text-muted-foreground text-center space-y-0.5">
             <p>Generated by SecureAccess Analyzer | {new Date().toLocaleDateString()}</p>
-            <p>Risk scores are based on app capability analysis and organizational context. Validate with your security team before deployment.</p>
-            <p>Pricing based on AWS published rates (US East). Actual costs may vary by region and usage pattern.</p>
+            <p>Risk scores based on app capability analysis and organizational context. Validate with your security team.</p>
+            <p>Pricing based on AWS published rates (US East). Actual costs may vary.</p>
           </div>
         </div>
       </div>

@@ -1,7 +1,5 @@
 import { useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, TrendingDown, DollarSign, Users, Shield } from "lucide-react";
 import {
@@ -13,12 +11,12 @@ import { useAnalysis } from "@/lib/analysisContext";
 import type { AccessTier } from "@shared/schema";
 
 const CHART_COLORS = {
-  native: "hsl(152, 69%, 40%)",
-  secure_browser: "hsl(38, 92%, 50%)",
-  full_daas: "hsl(0, 72%, 51%)",
-  savings: "hsl(152, 69%, 40%)",
-  vdi: "hsl(0, 72%, 51%)",
-  optimized: "hsl(221, 83%, 53%)",
+  native: "#16a34a",
+  secure_browser: "#f59e0b",
+  full_daas: "#dc2626",
+  savings: "#16a34a",
+  vdi: "#dc2626",
+  optimized: "#ff9900",
 };
 
 export default function FinancialDashboard() {
@@ -78,194 +76,143 @@ export default function FinancialDashboard() {
   const savingsPercent = blanketVDICost > 0 ? Math.round((totalAnnualSavings / blanketVDICost) * 100) : 0;
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+    <div className="p-4 md:p-5 space-y-4 max-w-[1400px]">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Financial Impact</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Cost optimization analysis: optimized WorkSpaces tier mix vs. blanket VDI deployment.
+          <h1 className="text-lg font-semibold tracking-tight">Financial Impact</h1>
+          <p className="text-muted-foreground text-[12px] mt-0.5">
+            Cost optimization: optimized WorkSpaces tier mix vs. blanket VDI deployment.
           </p>
         </div>
-        <Button onClick={() => navigate("/blueprint")} data-testid="button-view-blueprint">
-          Export Blueprint <ArrowRight className="w-4 h-4 ml-2" />
+        <Button size="sm" onClick={() => navigate("/blueprint")} data-testid="button-view-blueprint" className="text-[12px] h-8">
+          Export Blueprint <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <TrendingDown className="w-3.5 h-3.5" /> Annual Savings
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { icon: TrendingDown, label: "Annual Savings", value: `$${totalAnnualSavings.toLocaleString()}`, sub: `${savingsPercent}% reduction vs. VDI`, color: "text-emerald-600 dark:text-emerald-400" },
+          { icon: DollarSign, label: "Optimized Cost", value: `$${totalAnnualCost.toLocaleString()}`, sub: "Right-sized allocation", color: "" },
+          { icon: Users, label: "Blanket VDI Cost", value: `$${blanketVDICost.toLocaleString()}`, sub: `${organization.workforceSize.toLocaleString()} users x $35/mo`, color: "text-red-600 dark:text-red-400" },
+          { icon: Shield, label: "Compliance Gaps", value: riskSummary.complianceGapsClosed, sub: "Gaps addressed", color: "" },
+        ].map(item => (
+          <div key={item.label} className="border rounded bg-card p-3">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              <item.icon className="w-3 h-3" /> {item.label}
             </div>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400" data-testid="text-annual-savings">
-              ${totalAnnualSavings.toLocaleString()}
-            </div>
-            <div className="text-xs text-muted-foreground">{savingsPercent}% reduction vs. blanket VDI</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <DollarSign className="w-3.5 h-3.5" /> Optimized Annual Cost
-            </div>
-            <div className="text-2xl font-bold" data-testid="text-optimized-cost">
-              ${totalAnnualCost.toLocaleString()}
-            </div>
-            <div className="text-xs text-muted-foreground">Right-sized tier allocation</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Users className="w-3.5 h-3.5" /> Blanket VDI Cost
-            </div>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400" data-testid="text-vdi-cost">
-              ${blanketVDICost.toLocaleString()}
-            </div>
-            <div className="text-xs text-muted-foreground">{organization.workforceSize.toLocaleString()} users x $35/mo</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Shield className="w-3.5 h-3.5" /> Compliance Gaps Closed
-            </div>
-            <div className="text-2xl font-bold" data-testid="text-compliance-gaps">
-              {riskSummary.complianceGapsClosed}
-            </div>
-            <div className="text-xs text-muted-foreground">Security posture improvements</div>
-          </CardContent>
-        </Card>
+            <div className={`text-xl font-semibold font-mono ${item.color}`} data-testid={`text-${item.label.toLowerCase().replace(/\s/g, '-')}`}>{item.value}</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">{item.sub}</div>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Annual Cost Comparison</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={comparisonData} barSize={60}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="border rounded bg-card">
+          <div className="px-4 py-2.5 border-b text-[12px] font-medium">Annual Cost Comparison</div>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={comparisonData} barSize={50}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                 <RechartsTooltip
                   formatter={(value: number) => [`$${value.toLocaleString()}`, "Annual Cost"]}
-                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                  contentStyle={{ fontSize: 11, borderRadius: 2 }}
                 />
-                <Bar dataKey="cost" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="cost" radius={[2, 2, 0, 0]}>
                   {comparisonData.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-            <div className="text-center mt-2">
-              <Badge variant="secondary" className="text-xs">
-                Save ${totalAnnualSavings.toLocaleString()}/year ({savingsPercent}% reduction)
-              </Badge>
+            <div className="text-center mt-1 text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
+              Save ${totalAnnualSavings.toLocaleString()}/yr ({savingsPercent}%)
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Workforce Coverage by Tier</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
+        <div className="border rounded bg-card">
+          <div className="px-4 py-2.5 border-b text-[12px] font-medium">Workforce Coverage by Tier</div>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%" cy="50%"
-                  innerRadius={60} outerRadius={95}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={2} dataKey="value">
                   {pieData.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
                 <RechartsTooltip
                   formatter={(value: number, name: string) => [`${value} scenarios`, name]}
-                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                  contentStyle={{ fontSize: 11, borderRadius: 2 }}
                 />
-                <Legend
-                  formatter={(value) => <span style={{ fontSize: 11 }}>{value}</span>}
-                />
+                <Legend formatter={(value) => <span style={{ fontSize: 10 }}>{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center gap-4 text-xs mt-1">
+            <div className="flex justify-center gap-5 text-[10px] font-mono mt-1">
               {pieData.map(p => (
                 <div key={p.name} className="text-center">
-                  <div className="font-medium">{p.percentage}%</div>
+                  <div className="font-semibold">{p.percentage}%</div>
                   <div className="text-muted-foreground">{p.name}</div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Projected Cumulative Savings (36 Months)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+      <div className="border rounded bg-card">
+        <div className="px-4 py-2.5 border-b text-[12px] font-medium">Projected Cumulative Savings (36 Months)</div>
+        <div className="p-4">
+          <ResponsiveContainer width="100%" height={280}>
             <LineChart data={projectionData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+              <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 11 }}
-                label={{ value: "Month", position: "insideBottom", offset: -5, style: { fontSize: 11 } }}
+                tick={{ fontSize: 10 }}
+                label={{ value: "Month", position: "insideBottom", offset: -5, style: { fontSize: 10 } }}
               />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-              />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
               <RechartsTooltip
                 formatter={(value: number, name: string) => [
                   `$${value.toLocaleString()}`,
                   name === "vdiCost" ? "Blanket VDI" : name === "optimizedCost" ? "Optimized Mix" : "Cumulative Savings"
                 ]}
-                contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                contentStyle={{ fontSize: 11, borderRadius: 2 }}
               />
               <Legend formatter={(value) => {
                 const labels: Record<string, string> = { vdiCost: "Blanket VDI", optimizedCost: "Optimized Mix", savings: "Cumulative Savings" };
-                return <span style={{ fontSize: 11 }}>{labels[value] || value}</span>;
+                return <span style={{ fontSize: 10 }}>{labels[value] || value}</span>;
               }} />
-              <Line type="monotone" dataKey="vdiCost" stroke={CHART_COLORS.vdi} strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="optimizedCost" stroke={CHART_COLORS.optimized} strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="savings" stroke={CHART_COLORS.savings} strokeWidth={2} strokeDasharray="5 5" dot={false} />
+              <Line type="monotone" dataKey="vdiCost" stroke={CHART_COLORS.vdi} strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="optimizedCost" stroke={CHART_COLORS.optimized} strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="savings" stroke={CHART_COLORS.savings} strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
             </LineChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Cost per User by Tier</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={costByTier} layout="vertical" barSize={24}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-              <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={110} />
+      <div className="border rounded bg-card">
+        <div className="px-4 py-2.5 border-b text-[12px] font-medium">Cost per User by Tier</div>
+        <div className="p-4">
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={costByTier} layout="vertical" barSize={20}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+              <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} />
               <RechartsTooltip
                 formatter={(value: number) => [`$${value}/month per user`, "Cost"]}
-                contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                contentStyle={{ fontSize: 11, borderRadius: 2 }}
               />
-              <Bar dataKey="costPerUser" radius={[0, 4, 4, 0]}>
+              <Bar dataKey="costPerUser" radius={[0, 2, 2, 0]}>
                 {costByTier.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

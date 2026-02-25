@@ -1,29 +1,22 @@
 import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertTriangle, Shield, Monitor, ArrowRight, Info } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import { useAnalysis } from "@/lib/analysisContext";
 import { countVectors } from "@/lib/saasApps";
 import type { AccessTier, UserTier, DeviceTrust } from "@shared/schema";
-
-const tierColors: Record<AccessTier, string> = {
-  native: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-  secure_browser: "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30",
-  full_daas: "bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30",
-};
 
 const tierLabels: Record<AccessTier, string> = {
   native: "Native", secure_browser: "Secure Browser", full_daas: "Full DaaS",
 };
 
 const tierCellBg: Record<AccessTier, string> = {
-  native: "bg-emerald-500/15 dark:bg-emerald-500/20",
-  secure_browser: "bg-amber-500/15 dark:bg-amber-500/20",
-  full_daas: "bg-red-500/15 dark:bg-red-500/20",
+  native: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300",
+  secure_browser: "bg-amber-500/12 text-amber-700 dark:text-amber-300",
+  full_daas: "bg-red-500/12 text-red-700 dark:text-red-300",
 };
 
 export default function RiskHeatmap() {
@@ -69,59 +62,40 @@ export default function RiskHeatmap() {
   const daasPct = Math.round((riskSummary.fullDaaSCount / totalDecisions) * 100);
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+    <div className="p-4 md:p-5 space-y-4 max-w-[1400px]">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Risk Heatmap</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            App-by-context risk assessment matrix. Each cell shows the recommended access tier.
+          <h1 className="text-lg font-semibold tracking-tight">Risk Heatmap</h1>
+          <p className="text-muted-foreground text-[12px] mt-0.5">
+            App-by-context risk assessment matrix showing recommended access tiers.
           </p>
         </div>
-        <Button onClick={() => navigate("/policies")} data-testid="button-view-policies">
-          View Policy Details <ArrowRight className="w-4 h-4 ml-2" />
+        <Button size="sm" onClick={() => navigate("/policies")} data-testid="button-view-policies" className="text-[12px] h-8">
+          Policy Details <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground mb-1">Total Scenarios</div>
-            <div className="text-2xl font-bold" data-testid="text-total-scenarios">{totalDecisions}</div>
-            <div className="text-xs text-muted-foreground">{selectedApps.length} apps x {contextCombinations.length} contexts</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" /> Native Access
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { label: "Total Scenarios", value: totalDecisions, sub: `${selectedApps.length} apps x ${contextCombinations.length} contexts`, color: "" },
+          { label: "Native Access", value: `${nativePct}%`, sub: `${riskSummary.nativeCount} scenarios ($0/mo)`, color: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-500" },
+          { label: "Secure Browser", value: `${sbPct}%`, sub: `${riskSummary.secureBrowserCount} scenarios ($7/mo)`, color: "text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+          { label: "Full DaaS", value: `${daasPct}%`, sub: `${riskSummary.fullDaaSCount} scenarios ($35/mo)`, color: "text-red-600 dark:text-red-400", dot: "bg-red-500" },
+        ].map(item => (
+          <div key={item.label} className="border rounded bg-card p-3">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              {item.dot && <div className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />}
+              {item.label}
             </div>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400" data-testid="text-native-pct">{nativePct}%</div>
-            <div className="text-xs text-muted-foreground">{riskSummary.nativeCount} scenarios ($0/mo)</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-              <div className="w-2 h-2 rounded-full bg-amber-500" /> Secure Browser
-            </div>
-            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400" data-testid="text-sb-pct">{sbPct}%</div>
-            <div className="text-xs text-muted-foreground">{riskSummary.secureBrowserCount} scenarios ($7/mo)</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-              <div className="w-2 h-2 rounded-full bg-red-500" /> Full DaaS
-            </div>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400" data-testid="text-daas-pct">{daasPct}%</div>
-            <div className="text-xs text-muted-foreground">{riskSummary.fullDaaSCount} scenarios ($35/mo)</div>
-          </CardContent>
-        </Card>
+            <div className={`text-xl font-semibold font-mono ${item.color}`} data-testid={`text-${item.label.toLowerCase().replace(/\s/g, '-')}`}>{item.value}</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5">{item.sub}</div>
+          </div>
+        ))}
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3">
         <Select value={filterTier} onValueChange={setFilterTier}>
-          <SelectTrigger className="w-48" data-testid="select-filter-tier">
+          <SelectTrigger className="w-44 h-8 text-[12px]" data-testid="select-filter-tier">
             <SelectValue placeholder="Filter by tier" />
           </SelectTrigger>
           <SelectContent>
@@ -131,71 +105,66 @@ export default function RiskHeatmap() {
             <SelectItem value="full_daas">Full DaaS Only</SelectItem>
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-emerald-500/20 border border-emerald-500/30" /> Native</div>
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-amber-500/20 border border-amber-500/30" /> Secure Browser</div>
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-500/20 border border-red-500/30" /> Full DaaS</div>
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500/20 border border-emerald-500/30" /> Native</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-amber-500/20 border border-amber-500/30" /> Secure Browser</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500/20 border border-red-500/30" /> Full DaaS</span>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3 font-medium text-muted-foreground sticky left-0 bg-card z-10 min-w-[180px]">Application</th>
-                  {contextCombinations.map(combo => (
-                    <th key={combo.label} className="text-center p-3 font-medium text-muted-foreground min-w-[100px]">
-                      <div className="capitalize">{combo.userTier}</div>
-                      <div className="font-normal text-[10px]">{combo.deviceTrust}</div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredApps.map((app, i) => (
-                  <tr key={app.id} className={i % 2 === 0 ? "" : "bg-muted/30"}>
-                    <td className="p-3 sticky left-0 bg-card z-10">
-                      <div className="font-medium">{app.name}</div>
-                      <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                        {app.category} | {countVectors(app.exfiltrationVectors)} vectors
-                      </div>
-                    </td>
-                    {contextCombinations.map(combo => {
-                      const decision = getDecision(app.id, combo.userTier, combo.deviceTrust);
-                      if (!decision) return <td key={combo.label} className="p-2 text-center">-</td>;
-                      return (
-                        <td key={combo.label} className="p-2 text-center">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div
-                                className={`inline-flex items-center justify-center px-2 py-1 rounded-md text-[10px] font-medium ${tierCellBg[decision.recommendation]} cursor-help`}
-                                data-testid={`cell-${app.id}-${combo.userTier}-${combo.deviceTrust}`}
-                              >
-                                {decision.riskScore}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-[300px]">
-                              <div className="space-y-1">
-                                <div className="font-medium">{tierLabels[decision.recommendation]} - ${decision.monthlyCostPerUser}/mo</div>
-                                <p className="text-xs">{decision.reason}</p>
-                                {decision.dlpControls.clipboardBlocked && <Badge variant="secondary" className="text-[9px] mr-1">Clipboard Blocked</Badge>}
-                                {decision.dlpControls.fileTransferBlocked && <Badge variant="secondary" className="text-[9px] mr-1">File Transfer Blocked</Badge>}
-                                {decision.dlpControls.printBlocked && <Badge variant="secondary" className="text-[9px]">Print Blocked</Badge>}
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </td>
-                      );
-                    })}
-                  </tr>
+      <div className="border rounded bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr className="border-b bg-muted/30">
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground sticky left-0 bg-muted/30 z-10 min-w-[180px] text-[11px] uppercase tracking-wider">Application</th>
+                {contextCombinations.map(combo => (
+                  <th key={combo.label} className="text-center px-2 py-2 font-medium text-muted-foreground min-w-[90px] text-[10px] uppercase tracking-wider">
+                    <div className="capitalize">{combo.userTier}</div>
+                    <div className="font-normal opacity-60">{combo.deviceTrust}</div>
+                  </th>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredApps.map((app, i) => (
+                <tr key={app.id} className={`border-b last:border-0 ${i % 2 === 1 ? "bg-muted/15" : ""}`}>
+                  <td className="px-3 py-2 sticky left-0 bg-card z-10">
+                    <div className="font-medium text-[12px]">{app.name}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      {app.category} | {countVectors(app.exfiltrationVectors)} vectors
+                    </div>
+                  </td>
+                  {contextCombinations.map(combo => {
+                    const decision = getDecision(app.id, combo.userTier, combo.deviceTrust);
+                    if (!decision) return <td key={combo.label} className="px-2 py-2 text-center text-muted-foreground">-</td>;
+                    return (
+                      <td key={combo.label} className="px-2 py-2 text-center">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={`inline-flex items-center justify-center w-8 h-6 rounded text-[10px] font-mono font-semibold cursor-help ${tierCellBg[decision.recommendation]}`}
+                              data-testid={`cell-${app.id}-${combo.userTier}-${combo.deviceTrust}`}
+                            >
+                              {decision.riskScore}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[280px] text-[11px]">
+                            <div className="space-y-1">
+                              <div className="font-medium">{tierLabels[decision.recommendation]} - ${decision.monthlyCostPerUser}/mo</div>
+                              <p>{decision.reason}</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
