@@ -7,9 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ArrowRight, Search, ArrowUpDown, ClipboardX, FileX, PrinterCheck,
-  Droplets, Globe, ChevronDown, ChevronUp
+  Droplets, Globe, ChevronDown, ChevronUp, Info
 } from "lucide-react";
 import { useAnalysis } from "@/lib/analysisContext";
+import { getScoreBreakdown } from "@/lib/policyEngine";
+import { ScoreBreakdownPanel, ScoreFormulaInfo } from "@/components/score-breakdown";
 import type { AccessTier, PolicyDecision } from "@shared/schema";
 
 const tierConfig: Record<AccessTier, { label: string; bg: string }> = {
@@ -31,6 +33,7 @@ export default function PolicyTable() {
   const [sortField, setSortField] = useState<SortField>("riskScore");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [showFormula, setShowFormula] = useState(false);
 
   useEffect(() => {
     if (!result) navigate("/");
@@ -88,12 +91,22 @@ export default function PolicyTable() {
           <h1 className="text-lg font-semibold tracking-tight">Access Policy Table</h1>
           <p className="text-muted-foreground text-[12px] mt-0.5">
             Detailed policy decisions with reasoning for every app and user context.
+            <button
+              className="ml-1.5 text-[hsl(36,100%,45%)] hover:underline inline-flex items-center gap-0.5"
+              onClick={() => setShowFormula(f => !f)}
+              data-testid="button-show-formula"
+            >
+              <Info className="w-3 h-3" />
+              {showFormula ? "Hide scoring method" : "How is scoring calculated?"}
+            </button>
           </p>
         </div>
         <Button size="sm" onClick={() => navigate("/financial")} data-testid="button-view-financial" className="text-[12px] h-8">
           Financial Impact <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
         </Button>
       </div>
+
+      {showFormula && <ScoreFormulaInfo />}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
@@ -179,15 +192,25 @@ export default function PolicyTable() {
                       <div className="font-medium">{d.app.name}</div>
                       <div className="text-[10px] text-muted-foreground">{d.app.category}</div>
                       {isExpanded && (
-                        <div className="mt-2 p-2 rounded border bg-muted/20 text-[11px] space-y-1">
-                          <div className="font-medium text-[10px] uppercase tracking-wider text-muted-foreground">Reasoning</div>
-                          <p className="text-muted-foreground leading-relaxed">{d.reason}</p>
-                          {d.complianceGapsClosed.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Compliance:</span>
-                              {d.complianceGapsClosed.map(g => <span key={g} className="px-1.5 py-0.5 rounded bg-muted text-[10px]">{g}</span>)}
-                            </div>
-                          )}
+                        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <div className="p-2.5 rounded border bg-muted/20 text-[11px] space-y-1.5">
+                            <div className="font-medium text-[10px] uppercase tracking-wider text-muted-foreground">Reasoning</div>
+                            <p className="text-muted-foreground leading-relaxed">{d.reason}</p>
+                            {d.complianceGapsClosed.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Compliance:</span>
+                                {d.complianceGapsClosed.map(g => <span key={g} className="px-1.5 py-0.5 rounded bg-muted text-[10px]">{g}</span>)}
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-2.5 rounded border bg-muted/20">
+                            <ScoreBreakdownPanel
+                              breakdown={getScoreBreakdown(
+                                d.app, d.userTier, d.deviceTrust, d.locationRisk,
+                                result.organization.complianceFrameworks
+                              )}
+                            />
+                          </div>
                         </div>
                       )}
                     </td>

@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowRight, ClipboardCopy, Download, Upload, Printer, Monitor, Unplug, Database } from "lucide-react";
+import { ArrowRight, ClipboardCopy, Download, Upload, Printer, Monitor, Unplug, Database, Info } from "lucide-react";
 import { useAnalysis } from "@/lib/analysisContext";
 import { countVectors } from "@/lib/saasApps";
+import { getScoreBreakdown } from "@/lib/policyEngine";
+import { ScoreBreakdownPanel, ScoreFormulaInfo } from "@/components/score-breakdown";
 import type { AccessTier, UserTier, DeviceTrust } from "@shared/schema";
 
 const vectorLabels = [
@@ -33,6 +35,7 @@ export default function RiskHeatmap() {
   const { result } = useAnalysis();
   const [, navigate] = useLocation();
   const [filterTier, setFilterTier] = useState<string>("all");
+  const [showFormula, setShowFormula] = useState(false);
 
   useEffect(() => {
     if (!result) navigate("/");
@@ -78,12 +81,22 @@ export default function RiskHeatmap() {
           <h1 className="text-lg font-semibold tracking-tight">Risk Heatmap</h1>
           <p className="text-muted-foreground text-[12px] mt-0.5">
             App-by-context risk assessment matrix showing recommended access tiers.
+            <button
+              className="ml-1.5 text-[hsl(36,100%,45%)] hover:underline inline-flex items-center gap-0.5"
+              onClick={() => setShowFormula(f => !f)}
+              data-testid="button-show-formula-heatmap"
+            >
+              <Info className="w-3 h-3" />
+              {showFormula ? "Hide scoring method" : "How is scoring calculated?"}
+            </button>
           </p>
         </div>
         <Button size="sm" onClick={() => navigate("/policies")} data-testid="button-view-policies" className="text-[12px] h-8">
           Policy Details <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
         </Button>
       </div>
+
+      {showFormula && <ScoreFormulaInfo />}
 
       <div className="grid grid-cols-4 gap-2">
         {[
@@ -180,10 +193,17 @@ export default function RiskHeatmap() {
                               {decision.riskScore}
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-[280px] text-[11px]">
-                            <div className="space-y-1">
-                              <div className="font-medium">{tierLabels[decision.recommendation]} - ${decision.monthlyCostPerUser}/mo</div>
-                              <p>{decision.reason}</p>
+                          <TooltipContent className="max-w-[340px] text-[11px] p-0">
+                            <div className="px-3 py-1.5 border-b font-medium">{tierLabels[decision.recommendation]} - ${decision.monthlyCostPerUser}/mo</div>
+                            <div className="px-3 py-2 border-b text-muted-foreground">{decision.reason}</div>
+                            <div className="px-3 py-2">
+                              <ScoreBreakdownPanel
+                                breakdown={getScoreBreakdown(
+                                  app, combo.userTier, combo.deviceTrust, decision.locationRisk,
+                                  result.organization.complianceFrameworks
+                                )}
+                                compact
+                              />
                             </div>
                           </TooltipContent>
                         </Tooltip>

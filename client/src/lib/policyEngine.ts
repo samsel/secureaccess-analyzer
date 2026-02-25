@@ -33,6 +33,54 @@ const COMPLIANCE_GAPS: Record<string, string[]> = {
   GDPR: ["GDPR-Art32", "GDPR-Art25"],
 };
 
+export interface ScoreBreakdown {
+  factors: Array<{
+    label: string;
+    rawValue: string;
+    rawScore: number;
+    weight: number;
+    weighted: number;
+    maxWeighted: number;
+  }>;
+  total: number;
+  maxTotal: number;
+  overrides: string[];
+}
+
+export function getScoreBreakdown(
+  app: SaaSApp,
+  userTier: UserTier,
+  deviceTrust: DeviceTrust,
+  locationRisk: LocationRisk,
+  complianceFrameworks: ComplianceFramework[]
+): ScoreBreakdown {
+  const vectorCount = countVectors(app.exfiltrationVectors);
+  const dataScore = DATA_CLASSIFICATION_SCORES[app.dataClassification] || 2;
+  const userScore = USER_TIER_SCORES[userTier];
+  const deviceScore = DEVICE_TRUST_SCORES[deviceTrust];
+  const locationScore = LOCATION_RISK_SCORES[locationRisk];
+
+  const factors = [
+    { label: "Exfiltration Vectors", rawValue: `${vectorCount}/7 active`, rawScore: vectorCount, weight: 3, weighted: vectorCount * 3, maxWeighted: 7 * 3 },
+    { label: "Data Classification", rawValue: app.dataClassification, rawScore: dataScore, weight: 4, weighted: dataScore * 4, maxWeighted: 4 * 4 },
+    { label: "User Trust", rawValue: userTier, rawScore: userScore, weight: 3, weighted: userScore * 3, maxWeighted: 4 * 3 },
+    { label: "Device Trust", rawValue: deviceTrust, rawScore: deviceScore, weight: 3, weighted: deviceScore * 3, maxWeighted: 3 * 3 },
+    { label: "Location Risk", rawValue: locationRisk === "highRiskGeo" ? "high-risk" : locationRisk, rawScore: locationScore, weight: 2, weighted: locationScore * 2, maxWeighted: 3 * 2 },
+  ];
+
+  const total = factors.reduce((sum, f) => sum + f.weighted, 0);
+  const maxTotal = factors.reduce((sum, f) => sum + f.maxWeighted, 0);
+
+  const overrides: string[] = [];
+  if (app.requiresLocalOS) overrides.push("Requires local OS → Full DaaS");
+  if (app.dataClassification === "restricted") overrides.push("Restricted data → min Secure Browser");
+  if (deviceTrust === "unmanaged") overrides.push("Unmanaged device → min Secure Browser");
+  const hasStrictCompliance = complianceFrameworks.some(fw => ["HIPAA", "PCI-DSS", "FedRAMP"].includes(fw));
+  if (hasStrictCompliance) overrides.push("Strict compliance → lower threshold (≥15)");
+
+  return { factors, total, maxTotal, overrides };
+}
+
 export function calculateRiskScore(
   app: SaaSApp,
   userTier: UserTier,

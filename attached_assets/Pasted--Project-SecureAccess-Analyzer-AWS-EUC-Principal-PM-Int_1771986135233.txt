@@ -1,0 +1,622 @@
+# Project: SecureAccess Analyzer
+## AWS EUC Principal PM Interview — Full Execution Plan v2
+
+---
+
+## PART 1: THE PRODUCT VISION
+
+### What You're Building
+
+A single-page React web app where an IT security leader inputs their organization's SaaS application landscape and workforce profile, and instantly gets back:
+
+1. **A Risk Heatmap** — Every SaaS app categorized by exfiltration risk (clipboard, file download, screen capture, API extraction vectors)
+2. **An Access Policy Engine** — For each app + user context combination, the tool recommends the optimal WorkSpaces access tier: Native (no intervention), Secure Browser ($7/mo), or Full WorkSpaces DaaS ($35/mo)
+3. **A Financial Impact Dashboard** — Real-time cost comparison: "If you route your 200 contractors through Secure Browser instead of full VDI, you save $67,200/year while maintaining your SOC2 posture"
+4. **An Exportable Secure Access Blueprint** — A one-page summary the IT leader can hand to their CISO to justify the purchase
+
+### Why This Specific Idea Wins
+
+The JD says the team builds "opinionated, turnkey solutions" that are "no-brainers to buy and easy to use." Your app IS that philosophy, demonstrated as a working prototype.
+
+Here's the chain of logic an interviewer will follow:
+
+- "This candidate studied our product portfolio deeply enough to understand the Secure Browser vs. DaaS segmentation"
+- "They identified the real customer friction: CISOs don't know which tier to put each app in"
+- "They built a tool that solves that friction and simultaneously makes the business case for our product"
+- "This is exactly how a Principal PM thinks — they don't just build features, they build the bridge between customer pain and product purchase"
+
+---
+
+## PART 2: COMPETITIVE LANDSCAPE & THE MARKET GAP
+
+This section is critical. You need to know what exists so you can position your tool correctly in the interview and avoid landmines when interviewers challenge you.
+
+### What EXISTS today
+
+**Shadow IT Discovery / SaaS Risk Assessment Tools (the "upstream" problem):**
+
+These are plentiful, well-funded, and mature. They all answer: "What SaaS apps are your people using, and how risky are they?"
+
+| Vendor | App Catalog Size | Risk Attributes | What They Do |
+|--------|-----------------|-----------------|--------------|
+| Zscaler CASB | 8,500+ apps | 25 risk attributes | Discovers shadow IT, enforces DLP, blocks/allows/monitors |
+| Microsoft Defender for Cloud Apps | 31,000+ apps | 90+ risk factors | Shadow IT discovery, risk scoring, usage analysis |
+| Wing Security (SaaS Pulse) | Broad | Free assessment tier | Free SaaS security posture assessment |
+| Nudge Security | Broad | Identity-first | Shadow SaaS discovery + employee engagement |
+| Reco | Broad | Identity analytics | Dynamic SaaS security with behavioral analysis |
+| Grip Security | Broad | SaaS control plane | Discovery + identity management + posture monitoring |
+| Auvik SaaS Management | Broad | Real-time scanning | Continuous SaaS discovery via agents + IdP integration |
+| Valence Security | Broad | Unified platform | Combines CASB, browser, API, and IdP discovery |
+| Cloudflare CASB | Broad | Zero Trust integrated | SaaS app discovery within SASE framework |
+
+Key insight: **Their remediation stops at allow/block/monitor.** None of them say "route this through AWS Secure Browser with these specific DLP controls." They're vendor-agnostic by design.
+
+**AWS's Own Tools:**
+
+| Tool | What It Does | What It Doesn't Do |
+|------|-------------|-------------------|
+| AWS Pricing Calculator | Generic cost estimator for WorkSpaces (input bundle type + users → get dollar amount) | Doesn't tell you WHICH product to use for WHICH users |
+| WorkSpaces Applications Simple Pricing Tool | Excel spreadsheet for estimating AppStream/Applications costs | No risk assessment, no tier recommendation |
+| Migration Readiness Assessment (MRA) | 80+ question workshop evaluating cloud readiness across 6 CAF dimensions. Requires an SA or partner, takes a full day | Not EUC-specific. Doesn't address SaaS access patterns or security tiering |
+| AWS Cloud Adoption Readiness Tool | Self-service questionnaire for general cloud readiness | Generic cloud migration focus, no WorkSpaces product selection |
+
+Key insight: **AWS has cost calculators that assume you already know what you need.** There's no tool that says "given your app portfolio and workforce, here's the right mix."
+
+**VDI Competitors:**
+
+| Competitor | Mindshare | Key Advantage | Key Weakness |
+|-----------|-----------|--------------|-------------|
+| Azure Virtual Desktop (AVD) | 62% enterprise adoption | Microsoft ecosystem lock-in, M365 integration | No equivalent to Secure Browser at $7/mo |
+| Citrix DaaS | 13.7% mindshare | Deep feature set, mature enterprise admin tools | Complex, expensive, legacy perception |
+| Omnissa Horizon (VMware) | Strong in VMware shops | Integrated with existing VMware infra | Broadcom acquisition uncertainty |
+| Parallels RAS | SMB-focused | Simple, all-inclusive licensing | Limited enterprise features |
+| AWS WorkSpaces | 1.6% mindshare (growing) | Pay-as-you-go, AWS ecosystem, Secure Browser | Lowest mindshare, Microsoft licensing friction |
+
+Key insight: **AWS has only 1.6% VDI mindshare vs Citrix at 13.7%.** The growth story is about winning migrations and new workloads — which means the buying experience and "no-brainer to buy" positioning matters enormously. Your tool directly addresses this.
+
+### THE GAP: What DOES NOT EXIST
+
+**Nobody connects SaaS risk assessment output to a WorkSpaces product recommendation.**
+
+The market splits cleanly into two halves that don't talk to each other:
+
+```
+LEFT SIDE (Risk Discovery)          RIGHT SIDE (Product Pricing)
+┌─────────────────────┐             ┌─────────────────────┐
+│ Zscaler, Defender,  │             │ AWS Pricing Calc,   │
+│ Nudge, Wing, Reco   │             │ Pricing Spreadsheet │
+│                     │             │                     │
+│ "Here's what's      │     ???     │ "Here's what it     │
+│  risky"             │ ◄─ GAP ──► │  costs"             │
+│                     │             │                     │
+│ Output: risk scores │             │ Input: you already  │
+│ + allow/block       │             │ know what you need  │
+└─────────────────────┘             └─────────────────────┘
+                    
+              YOUR TOOL FILLS THIS GAP:
+              "Given your risk → here's which product 
+               → for which users → at what cost"
+```
+
+**The bridge between "here's your SaaS risk" and "here's exactly which WorkSpaces tier to deploy, for which users, at what cost" — does not exist.** Not from AWS, not from any CASB vendor, not from any VDI competitor.
+
+A PeerSpot user review literally said: "There could be an end-to-end tool similar to AWS Transform that helps from assessment to migration" for WorkSpaces.
+
+### Why This Gap Exists (the structural argument)
+
+It's not that nobody thought of it. The incentives don't align for anyone except AWS to build it:
+
+- **CASBs won't build it** because they're vendor-neutral. Recommending a specific AWS product would alienate their Zscaler/Microsoft/Palo Alto partnerships. Their business model is "we discover risk, you decide the remedy."
+- **AWS Solutions Architects do this work manually** in customer engagements, but it's bespoke and consultative — not self-service. SAs are scarce and expensive.
+- **VDI competitors won't build it** because they have simpler product lines (Citrix doesn't need to help customers choose between 4+ tiers the way AWS does).
+
+### How to Use This in the Interview
+
+**The Structural Gap Pitch (memorize this):**
+
+> "I mapped the competitive landscape and found a structural gap. CASBs like Zscaler and Defender for Cloud Apps are excellent at discovering shadow IT and scoring risk — but their remediation stops at allow/block/monitor. AWS has pricing calculators, but they assume you already know which product you need. Nobody bridges the gap between 'here's your SaaS risk' and 'here's exactly which WorkSpaces product to deploy, for which users, at what cost.' That's the tool I built. And the reason this gap exists is that only AWS has the incentive to build it — CASBs won't recommend a specific vendor's product. This is a first-party opportunity."
+
+**The Partnership Angle (use this for Think Big):**
+
+> "The ideal v2 of this tool ingests CASB output. A customer runs Zscaler or Defender, exports their discovered app inventory, uploads it to this tool, and gets a WorkSpaces deployment plan. That turns every CASB vendor into a lead-gen channel for WorkSpaces. Instead of competing with CASBs, we complete their workflow."
+
+**The Mindshare Angle (use this for business acumen):**
+
+> "AWS has 1.6% VDI mindshare vs Citrix at 13.7%. The way you close that gap isn't just by building better features — it's by making the buying decision effortless. This tool removes the biggest friction in the sales cycle: the customer not knowing which WorkSpaces product they need."
+
+---
+
+## PART 3: INTERVIEW STRATEGY & TALKING POINTS
+
+### The Core Narrative (memorize this)
+
+> "I studied the WorkSpaces portfolio and realized that the hardest problem for customers isn't the technology — it's the decision architecture. A CISO evaluating EUC has to answer: for each of my 200+ SaaS apps, which of the 4+ WorkSpaces products is the right fit, for which users, at what cost? That's a combinatorial problem that currently requires expensive consultants or weeks of internal analysis. I mapped the competitive landscape — CASBs like Zscaler solve discovery but not product selection, AWS pricing tools solve cost but not risk assessment — and found that nobody bridges this gap. I built a tool that turns that into a 10-minute self-service experience, and the output doubles as the business case that gets the deal signed."
+
+### LP-by-LP Talking Points
+
+**Customer Obsession**
+- "I didn't start with the technology. I started with: who is the buyer, and what's stopping them from saying yes? The buyer is typically a CISO or VP of IT. They need three things to approve a purchase: a risk justification, a cost justification, and a deployment plan. My tool generates all three."
+- "The export feature exists because I mapped the actual procurement workflow. The person using this tool isn't the person signing the PO — they need an artifact to take up the chain."
+
+**Think Big**
+- "This tool could live on the WorkSpaces marketing page as a 'Free Assessment' lead-gen tool. A CISO runs the analyzer, sees $200K in savings, and that becomes the first touch in the sales funnel. It turns product marketing into a conversion engine."
+- "Long-term, this logic could be embedded in the AWS Console itself — when a customer provisions WorkSpaces, the system recommends the right tier based on their app portfolio and security requirements."
+- "The partnership play: if we support CASB export formats as input, every Zscaler and Defender deployment becomes a lead-gen channel for WorkSpaces. We'd be completing the CASB workflow instead of competing with it."
+
+**Invent and Simplify**
+- "The insight is that 'secure browser vs. full VDI' is not a technical decision — it's a risk/cost optimization problem. I simplified it to: what data can leave the session? If clipboard, file transfer, or print are vectors for a given app, and the user is on an unmanaged device, route through Secure Browser. If the app needs local OS integration or GPU, use full DaaS. Otherwise, native access is fine."
+- "I reduced a complex multi-variable decision to three inputs: app sensitivity, device trust level, and user risk tier."
+- "CASBs catalog 8,500+ apps with 90+ risk factors. That's comprehensive but overwhelming. I distilled this down to the 7 exfiltration vectors that map directly to Secure Browser's DLP controls — because those are the only ones that matter for the product recommendation."
+
+**Are Right, A Lot**
+- "I made a deliberate product decision to focus on SaaS app risk rather than network-level analysis. Here's why: 65% of enterprise SaaS apps are unsanctioned shadow IT. The biggest exfiltration risk isn't from apps IT knows about — it's from the ones they don't. My tool surfaces those gaps."
+- "I chose to map DLP control vectors (clipboard, file transfer, print, screen capture) rather than generic 'risk scores' because those are the exact controls that WorkSpaces Secure Browser enforces. The recommendation maps 1:1 to product capabilities."
+- "I validated my approach against the competitive landscape: Zscaler uses 25 risk attributes, Defender uses 90+. More attributes means better discovery. But for product selection, you only need the attributes that correspond to product capabilities. That's 7 exfiltration vectors mapped to 3 product tiers."
+
+**Dive Deep**
+- "The policy engine evaluates 4 dimensions per app: data sensitivity classification, exfiltration vectors available in the app, compliance framework requirements, and user context (device trust + location). Each dimension has weighted scoring. I can walk you through the algorithm."
+- "I curated a database of 150+ SaaS apps with pre-scored risk attributes by analyzing their actual feature sets — does Salesforce allow file exports? Yes. Does it allow clipboard paste of records? Yes. Does Jira allow bulk CSV export? Yes. Each of these maps to a DLP control that Secure Browser can enforce."
+- "I studied AWS's competitive position: 1.6% VDI mindshare vs Citrix at 13.7%, AVD at 62% enterprise adoption. The growth unlock isn't feature parity — it's reducing buying friction. This tool is a GTM accelerant."
+
+**Bias for Action**
+- "I built this in 5 days. Not a mockup — a working tool with real policy logic, real cost calculations, and a real export. I did this because I wanted to walk into this interview having done the work, not just talked about it."
+
+**Deliver Results**
+- "The tool produces a quantified output: X dollars saved, Y exfiltration vectors closed, Z compliance gaps addressed. I chose this design because in enterprise sales, you don't win on features — you win on measurable outcomes."
+
+**Earn Trust**
+- "I open-sourced the risk scoring methodology. Every recommendation shows its reasoning — 'This app was flagged because it supports file export and your contractors are on unmanaged devices.' No black boxes. An IT leader needs to defend these recommendations to their CISO, so transparency is non-negotiable."
+
+### The "So What" Question (be ready for this)
+
+An interviewer will ask: "This is cool, but how does this actually help AWS sell more WorkSpaces?"
+
+Your answer: "Three ways. First, it creates urgency — when a CISO sees that 40% of their SaaS apps have unmitigated exfiltration vectors, that's a 'hair on fire' moment that accelerates the sales cycle. Second, it right-sizes the deal — instead of the customer defaulting to full VDI for everyone ($35/user/mo) or doing nothing, they get an optimized mix that's cheaper and more secure, which makes it a no-brainer to buy. Third, it generates a deployment roadmap — the customer walks away knowing exactly which apps to onboard first, which reduces time-to-value and improves retention. And here's the kicker: AWS has 1.6% VDI mindshare. The way to close that gap against Citrix and AVD isn't just better features — it's making the buying decision effortless."
+
+### The Competitive Questions (be ready for all of these)
+
+**"How is this different from what Zscaler or Netskope does?"**
+
+"CASBs discover and monitor shadow IT — Zscaler catalogs 8,500+ apps across 25 risk attributes, Defender covers 31,000+ apps. They're excellent at that. But their remediation is vendor-agnostic: allow, block, or monitor. My tool doesn't compete with CASBs — it complements them. A CASB tells you what's happening. My tool tells you what to DO about it, specifically using WorkSpaces products. Think of it as the bridge between CASB discovery and WorkSpaces deployment. In fact, the v2 vision is to accept CASB export files as input — which turns every CASB deployment into a WorkSpaces lead-gen channel."
+
+**"Microsoft Defender already has 31,000 apps and 90 risk factors. Why would anyone use a tool with 150 apps?"**
+
+"Different purpose, different design philosophy. Defender is optimized for breadth of discovery — they want to find every app on your network. My tool is optimized for depth of product recommendation — I only need the attributes that map to WorkSpaces DLP controls (clipboard, file transfer, print, etc.). 90 risk factors is great for security monitoring. 7 exfiltration vectors is what you need for product selection. It's the difference between a diagnostic tool and a prescription tool."
+
+**"Wing Security already offers a free SaaS risk assessment. How is yours different?"**
+
+"Wing tells you your apps are risky. I tell you exactly how to secure them using WorkSpaces — which tier, which DLP controls, at what cost, with a deployment roadmap. Wing's output is 'you have a problem.' My output is 'here's the solution, here's what it costs, and here's the document to get it approved.' That last-mile conversion from 'awareness' to 'purchase decision' is where the value is."
+
+**"Why not just let our Solutions Architects do this in customer meetings?"**
+
+"They should, and this tool helps them do it faster. SAs currently do this work manually — gathering app inventories, evaluating risk, building custom recommendations. That takes hours per customer. This tool does the first 80% in 10 minutes, so the SA can spend their time on the high-value 20%: architecture nuances, integration planning, and relationship building. It scales your SA capacity without hiring more SAs."
+
+---
+
+## PART 4: WHAT TO HIGHLIGHT AND WHAT TO AVOID
+
+### Highlight These Things
+
+1. **You studied the actual product portfolio.** Reference specific products by name (WorkSpaces DaaS, WorkSpaces Secure Browser, WorkSpaces Thin Client, WorkSpaces Applications). Show you understand the tiering.
+
+2. **You mapped the competitive landscape.** Name specific competitors and their capabilities. Show you know Zscaler has 8,500 apps, Defender has 31,000, AVD has 62% enterprise adoption, AWS has 1.6% mindshare. This signals Principal-level market awareness.
+
+3. **You identified a structural market gap.** The fact that nobody bridges CASB risk output to WorkSpaces product recommendation isn't an oversight — it's a structural incentive problem that only AWS can solve. This is the kind of insight that separates Principal PMs from Senior PMs.
+
+4. **You understand the customer's procurement workflow.** The tool doesn't just analyze — it produces an artifact that fits into how enterprise purchases actually get approved.
+
+5. **You made opinionated product decisions.** Every design choice has a "because" behind it. The scoring weights, the export format, the three-tier model — all defensible.
+
+6. **The cost model is real.** Use actual published AWS pricing: Secure Browser at $7/mo, WorkSpaces DaaS starting at $25/mo for Value bundles up to $35+/mo for Performance. Show you did your pricing homework.
+
+7. **You thought about what happens AFTER the tool.** "The natural extension is: this analyzer runs continuously, connected to the customer's identity provider and CASB, and dynamically adjusts access policies as new SaaS apps appear or user contexts change."
+
+### Avoid These Things
+
+1. **Don't oversell it as a product.** It's a prototype that demonstrates product thinking. If you claim it's production-ready, you lose credibility.
+
+2. **Don't call it a CASB.** CASBs are billion-dollar products with 8,500-31,000 app catalogs. Yours is a decision-support tool that assumes the CASB (or manual audit) has already happened. Frame it as complementary, never competitive.
+
+3. **Don't give it a codename.** Just call it "SecureAccess Analyzer" or "the SaaS access assessment tool." Amazon culture dislikes vanity naming.
+
+4. **Don't spend more than 2 minutes demoing.** Show the key flow (input → risk heatmap → policy recommendation → cost savings → export), then shift to talking about the product thinking behind it. The demo is the hook; the conversation is the substance.
+
+5. **Don't pretend you'd ship this exact thing.** When they push back, say: "This is a 'working backwards' artifact. In a real scenario, I'd start with customer interviews to validate the scoring model and work with engineering to understand integration points with the existing console. But the core insight — that customers need help navigating the product portfolio — that I'm confident about."
+
+6. **Don't trash competitors.** When discussing Citrix, AVD, or CASBs, be respectful and factual. The point isn't that they're bad — it's that there's a gap only AWS is positioned to fill. Amazon interviewers respect candidates who understand the competition without being dismissive.
+
+---
+
+## PART 5: IMPLEMENTATION PLAN
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    React SPA                         │
+│                                                      │
+│  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
+│  │  Input    │  │  Policy  │  │  Results           │  │
+│  │  Wizard   │→ │  Engine  │→ │  Dashboard         │  │
+│  │          │  │ (client) │  │                    │  │
+│  └──────────┘  └──────────┘  └───────────────────┘  │
+│       │                              │               │
+│  ┌──────────┐                 ┌──────────────────┐   │
+│  │  SaaS    │                 │  PDF/Summary     │   │
+│  │  App DB  │                 │  Export          │   │
+│  │ (JSON)   │                 └──────────────────┘   │
+│  └──────────┘                                        │
+└─────────────────────────────────────────────────────┘
+```
+
+Everything runs client-side. No backend. No API keys. No data leaves the browser. This is itself a product decision you can talk about: "For a security assessment tool, sending your app inventory to a third-party server would be a non-starter. Privacy-by-design."
+
+### Tech Stack
+
+- **React 18** with functional components and hooks
+- **Tailwind CSS** for styling (fast, professional, no custom CSS rabbit holes)
+- **Recharts** for the risk heatmap and cost comparison charts
+- **html2canvas + jsPDF** for the exportable blueprint (or just a nicely formatted print view)
+- **No backend** — all logic and data is client-side
+- **Vite** for build tooling (fast dev server)
+
+### Data Model
+
+#### SaaS App Database (you'll curate this — ~150 apps)
+
+```json
+{
+  "id": "salesforce",
+  "name": "Salesforce",
+  "category": "CRM",
+  "exfiltrationVectors": {
+    "clipboardPaste": true,
+    "fileDownload": true,
+    "fileUpload": true,
+    "printCapable": true,
+    "screenCapturable": true,
+    "apiExport": true,
+    "bulkDataExport": true
+  },
+  "dataClassification": "confidential",
+  "commonCompliance": ["SOC2", "HIPAA", "PCI-DSS"],
+  "typicalUsers": ["sales", "support", "management"],
+  "notes": "Supports bulk record export, report downloads, and API-based data extraction"
+}
+```
+
+#### User Context Model
+
+```json
+{
+  "userTier": "contractor",        // employee | contractor | vendor | temp
+  "deviceTrust": "unmanaged",      // managed | unmanaged | byod
+  "locationRisk": "remote",        // office | remote | highRiskGeo
+  "dataAccess": "sensitive",       // public | internal | sensitive | restricted
+  "complianceScope": ["SOC2", "HIPAA"]
+}
+```
+
+#### Policy Decision Output
+
+```json
+{
+  "app": "salesforce",
+  "userContext": "contractor-unmanaged-remote",
+  "recommendation": "secure_browser",
+  "reason": "Unmanaged device + 5 active exfiltration vectors + sensitive data = high risk. Secure Browser enforces clipboard/file/print DLP controls.",
+  "dlpControls": {
+    "clipboardBlocked": true,
+    "fileTransferBlocked": true,
+    "printBlocked": true,
+    "watermarkEnabled": true
+  },
+  "monthlyCostPerUser": 7,
+  "alternativeCost": 35,
+  "annualSavingsPerUser": 336,
+  "complianceGapsClosed": ["SOC2-CC6.7", "HIPAA-164.312(c)"]
+}
+```
+
+### Policy Engine Logic (the brain of the app)
+
+```
+RISK SCORE = weighted sum of:
+  - Exfiltration Vector Count (0-7)     × 3
+  - Data Classification Level (1-4)      × 4
+  - User Trust Level (1-4)               × 3
+  - Device Trust Level (1-3)             × 3
+  - Location Risk (1-3)                  × 2
+
+THRESHOLDS:
+  Score 0-20  → NATIVE ACCESS (no intervention needed)
+  Score 21-45 → SECURE BROWSER ($7/mo, DLP controls enabled)
+  Score 46+   → FULL WORKSPACES DAAS ($23-35/mo, full isolation)
+
+OVERRIDES:
+  - Any app with "restricted" data classification → minimum Secure Browser
+  - Any "unmanaged" device → minimum Secure Browser
+  - Compliance scope includes HIPAA or PCI-DSS → minimum Secure Browser
+  - App requires local OS integration (e.g., CAD, IDE) → Full DaaS
+  - App is browser-only with no exfiltration vectors → Native
+```
+
+### Day-by-Day Build Plan
+
+#### Day 1: Foundation + Data Layer (6-8 hours)
+
+**Morning: Project Setup**
+- Initialize Vite + React + Tailwind project
+- Set up folder structure:
+  ```
+  src/
+    components/
+      InputWizard/
+      PolicyEngine/
+      ResultsDashboard/
+      ExportView/
+    data/
+      saasApps.json
+      complianceFrameworks.json
+      pricingTiers.json
+    utils/
+      policyEngine.js
+      riskScoring.js
+      costCalculator.js
+    App.jsx
+  ```
+- Build the navigation shell (3-step wizard: Input → Results → Export)
+
+**Afternoon: SaaS App Database**
+- This is the most important asset. Curate 150 apps across categories:
+  - Productivity (Google Workspace, Microsoft 365, Notion, Slack)
+  - CRM (Salesforce, HubSpot, Zoho)
+  - Engineering (GitHub, GitLab, Jira, Confluence, AWS Console)
+  - Finance (QuickBooks, NetSuite, Expensify, Bill.com)
+  - HR (Workday, BambooHR, ADP, Gusto)
+  - Security (Okta, CrowdStrike, Splunk)
+  - Design (Figma, Canva, Adobe CC)
+  - Communication (Zoom, Teams, WhatsApp Web)
+  - Storage (Dropbox, Box, Google Drive, OneDrive)
+  - Analytics (Tableau, Looker, Power BI)
+  - AI Tools (ChatGPT, Claude, Copilot, Midjourney)
+- For each app, score the 7 exfiltration vectors based on actual app capabilities
+- Source: You can research this from app documentation and CASB vendor reports (Zscaler's public app catalog is a good starting point)
+
+**Evening: Policy Engine Core**
+- Implement the risk scoring algorithm in `policyEngine.js`
+- Write unit tests for edge cases (all low risk, all high risk, mixed scenarios)
+- Implement the recommendation mapper (score → tier → DLP controls)
+
+**Day 1 Deliverable:** Working policy engine that takes (app + userContext) → (recommendation + cost + reasoning). Testable via console.
+
+---
+
+#### Day 2: Input Experience (6-8 hours)
+
+**Morning: Organization Profile Input**
+- Build the first screen: "Tell us about your organization"
+  - Industry dropdown (affects compliance defaults): Healthcare, Finance, Government, Technology, Education, Retail, Other
+  - Workforce size slider: 100 → 10,000+
+  - Workforce composition:
+    - % Full-time employees
+    - % Contractors
+    - % Vendors/Partners
+  - Primary compliance frameworks (multi-select checkboxes): SOC2, HIPAA, PCI-DSS, FedRAMP, GDPR
+
+**Afternoon: SaaS App Selection**
+- Build the second screen: "Select your SaaS applications"
+  - Searchable, categorized grid of apps from the database
+  - Each app shows: icon, name, category, and a small risk indicator badge
+  - User can click to select apps their org uses
+  - "Select All in Category" for quick bulk selection
+  - Custom app input: "Add an app we don't have listed" (user scores the exfiltration vectors manually)
+
+**Evening: User Context Configuration**
+- Build the third screen: "Define your access scenarios"
+  - Device policy: What % of users are on managed vs. unmanaged vs. BYOD devices?
+  - Remote work model: Office-first, Hybrid, Remote-first
+  - High-security personas: Which roles handle restricted data? (Finance, HR, Engineering, Executive)
+  - Quick presets: "Contact Center" (all unmanaged, all remote, customer data) vs. "Engineering Team" (managed, hybrid, source code)
+
+**Day 2 Deliverable:** Complete input flow that collects all data needed for the policy engine. Navigation between steps works. Data persists in React state.
+
+---
+
+#### Day 3: Results Dashboard (6-8 hours)
+
+**Morning: Risk Heatmap**
+- Build the primary results view
+- Grid visualization: rows = apps, columns = user context scenarios
+  - Cell color: green (native), amber (secure browser), red (full DaaS)
+  - Click any cell to see the full reasoning and recommended DLP controls
+- Summary stats at top:
+  - "X of Y apps require Secure Browser for contractors on unmanaged devices"
+  - "Z exfiltration vectors identified across your app portfolio"
+  - "N compliance gaps that Secure Browser would close"
+
+**Afternoon: Access Policy Table**
+- Detailed table view for IT admins who want the specifics:
+  - App | User Tier | Device | Recommended Tier | DLP Controls | Monthly Cost | Reasoning
+  - Sortable by any column
+  - Filterable by recommendation tier, compliance framework, risk level
+- This is the "Dive Deep" artifact — it shows the full reasoning chain for every decision
+
+**Evening: Cost Impact Dashboard**
+- Recharts visualizations:
+  1. **Bar chart**: "Monthly cost per user by access tier" — showing the distribution of native ($0) vs. Secure Browser ($7) vs. Full DaaS ($23-35)
+  2. **Comparison chart**: "Your optimized mix vs. Full VDI for everyone" — the headline savings number
+  3. **Pie chart**: "Workforce coverage by security tier" — what % of your users get which level of protection
+  4. **Line chart**: "Projected annual savings" showing cumulative savings over 12/24/36 months
+- Key metric prominently displayed: "Annual savings: $X vs. blanket VDI deployment"
+
+**Day 3 Deliverable:** Full dashboard with working heatmap, policy table, and cost charts. All driven by real policy engine output.
+
+---
+
+#### Day 4: Export + Polish (6-8 hours)
+
+**Morning: Secure Access Blueprint Export**
+- Build a print-optimized view that generates a clean PDF-like summary:
+  - Executive Summary: "Your organization uses X SaaS apps. We identified Y high-risk access patterns. Recommended approach: Z."
+  - Risk Overview: Simplified heatmap
+  - Recommended Architecture: 3-tier diagram showing which apps go through which access method
+  - Cost Summary: The headline savings number with breakdown
+  - Next Steps: "1. Pilot Secure Browser with your contractor population. 2. Extend to remote employees. 3. Evaluate full DaaS for power users."
+- Use browser print / html2canvas for clean export
+
+**Afternoon: Visual Polish**
+- Color palette: Use AWS orange (#FF9900) as accent, dark navy (#232F3E) as primary — this subtly signals product affinity without being tacky
+- Responsive layout for presenting on a laptop screen
+- Loading animations for the "analysis" step (even though it's instant — the 1-2 second delay with a progress animation adds perceived sophistication)
+- Tooltips on every metric explaining the methodology
+
+**Evening: Edge Cases + Demo Prep**
+- Test with pre-built scenarios:
+  - "100-person fintech startup" (high compliance, small team, mostly managed)
+  - "5000-person healthcare system" (HIPAA heavy, lots of contractors, BYOD)
+  - "500-person tech company" (low compliance, many developer tools, hybrid)
+- Pre-load these as "demo scenarios" the user can select for quick demo
+- Practice your 2-minute walkthrough
+
+**Day 4 Deliverable:** Polished, exportable app with 3 pre-built demo scenarios.
+
+---
+
+#### Day 5: Buffer + Demo Rehearsal (4 hours)
+
+- Fix any bugs from Day 4 testing
+- Deploy to Vercel or Netlify (free tier) so you can share a live URL
+- Record a 2-minute Loom video walkthrough as backup
+- Write a README.md with: Problem Statement, Competitive Gap, Approach, Product Decisions, Technical Architecture, What I'd Do Next
+- Practice the interview narrative 3 times out loud
+
+---
+
+### Key Technical Decisions to Be Prepared to Defend
+
+| Decision | Why |
+|----------|-----|
+| Client-side only, no backend | Security tool shouldn't exfiltrate your app inventory to a third party. Privacy-by-design. |
+| React, not Next.js | No server-side rendering needed. Simpler architecture for a client-side tool. |
+| Curated app database, not API-based | Ensures accuracy of exfiltration vector scoring. APIs would give you app names, not security posture. |
+| Weighted scoring, not ML | Explainability matters more than sophistication for a security recommendation. IT admins need to see and trust the logic. |
+| 7 exfiltration vectors, not 90 risk factors | CASBs use 90+ factors for discovery. We only need the ones that map to Secure Browser DLP controls. Different purpose, different granularity. |
+| Three tiers only (Native/SecureBrowser/DaaS) | Maps 1:1 to actual WorkSpaces product SKUs. Adding more tiers creates decision fatigue — which is the exact problem we're solving. |
+| Export as printable summary, not raw data | The end user of the export isn't the person running the tool — it's their CISO. Executives read summaries, not spreadsheets. |
+| 150 app database, not comprehensive | Covers the top apps by enterprise usage. The tool includes "add custom app" for anything missing. 150 curated apps with accurate vector scoring beats 8,500 with generic risk scores for our use case. |
+
+---
+
+## PART 6: THE SaaS APP DATABASE — STARTER SET
+
+This is critical and time-intensive. Here's a starter framework for 30 apps to get you moving. You'll expand to 150 in Day 1.
+
+### Scoring Guide for Exfiltration Vectors
+
+| Vector | What It Means | Score Impact |
+|--------|--------------|-------------|
+| clipboardPaste | User can copy data out of the app via clipboard | High |
+| fileDownload | App allows downloading files/reports/exports | High |
+| fileUpload | App allows uploading files (data ingress risk) | Medium |
+| printCapable | App content can be printed | Medium |
+| screenCapturable | App doesn't prevent screenshots | Low (hard to prevent) |
+| apiExport | App has APIs that can extract data programmatically | High |
+| bulkDataExport | App supports bulk record/report export | Critical |
+
+### Starter Apps (expand to 150)
+
+**Productivity**
+- Google Workspace: all 7 vectors active, "internal" default classification
+- Microsoft 365: all 7 vectors active, "internal" default
+- Notion: clipboard, file download, print, screen — no bulk API export
+- Slack: clipboard, file download/upload, screen — no print, no bulk export
+
+**CRM**
+- Salesforce: all 7 vectors active, "confidential" default — major exfiltration target
+- HubSpot: all 7 except bulk export for free tier
+
+**Engineering**
+- GitHub: clipboard, file download, API export, bulk clone — "restricted" for private repos
+- Jira: clipboard, file/report export, API — "internal"
+- AWS Console: all 7 vectors, "restricted" — this is the ultimate sensitive app
+
+**Finance**
+- QuickBooks: file download, print, report export — "confidential"
+- Expensify: file download, receipt images — "confidential"
+- NetSuite: all 7 vectors — "restricted" for financial data
+
+**HR**
+- Workday: file download, report export, print — "restricted" (PII)
+- BambooHR: file download, print — "restricted"
+
+**AI Tools (the hot category — flag these prominently)**
+- ChatGPT: clipboard paste IN (users paste company data), file upload — unique risk: data goes TO the AI, not from it
+- Claude: same as ChatGPT
+- Midjourney: file upload of company images — lower risk for text data
+- GitHub Copilot: code context sent to external service — "restricted" for proprietary code
+
+### Compliance Mapping
+
+| Framework | Key Requirement | How Secure Browser Helps |
+|-----------|----------------|--------------------------|
+| SOC2 CC6.7 | Restrict data transfer to authorized systems | DLP controls block clipboard, file transfer, print |
+| HIPAA §164.312(c) | Integrity controls for ePHI | No data stored on endpoint; session is ephemeral |
+| HIPAA §164.312(d) | Person authentication | SAML federation + session isolation |
+| PCI-DSS 3.4 | Render PAN unreadable | Pixel streaming means no card data on device |
+| PCI-DSS 7.1 | Limit access to need-to-know | Policy engine restricts access by role |
+| FedRAMP AC-4 | Information flow enforcement | URL filtering + DLP in secure browser |
+| GDPR Art 32 | Appropriate technical measures | Ephemeral sessions, no local data storage |
+
+---
+
+## PART 7: PRICING DATA (from AWS public pages)
+
+Use these in your cost calculator. All prices are per user per month.
+
+| Product | Bundle | Monthly Cost | Use Case |
+|---------|--------|-------------|----------|
+| WorkSpaces Secure Browser | Standard | $7 | Web-only access, BYOD, contractors |
+| WorkSpaces DaaS | Value | $25 | Light office work, task workers |
+| WorkSpaces DaaS | Standard | $31 | Knowledge workers, general business |
+| WorkSpaces DaaS | Performance | $47 | Power users, developers |
+| WorkSpaces DaaS | Power | $48 | Graphics, CAD, engineering |
+| WorkSpaces DaaS | PowerPro | $55 | GPU workloads, 3D rendering |
+| WorkSpaces Thin Client | Device | $195 one-time | Physical device for contact centers |
+
+Note: DaaS prices above are AlwaysOn monthly for US East (N. Virginia) with Windows license included. AutoStop pricing (hourly) is available for part-time users and can be significantly cheaper. Always reference the official AWS pricing page for current numbers.
+
+**The killer stat for your cost comparison:**
+- Blanket Full VDI for 500 contractors: 500 × $35 × 12 = **$210,000/year**
+- Optimized mix (400 on Secure Browser + 100 on DaaS): (400 × $7 × 12) + (100 × $35 × 12) = **$75,600/year**
+- **Annual savings: $134,400** — that's the number that makes CISOs lean forward
+
+**Competitive pricing context:**
+- Citrix DaaS: typically $10-25/user/mo for the platform + cloud infrastructure costs on top
+- Azure Virtual Desktop: variable (consumed Azure compute), but Microsoft licensing advantages for M365 shops
+- AWS Secure Browser at $7/mo is the cheapest entry point in the market for securing SaaS access — this is a key competitive differentiator
+
+---
+
+## PART 8: WHAT TO SAY WHEN THEY PUSH BACK
+
+**"Isn't this just a calculator? Why does this need to be a product?"**
+"The calculator is the MVP. The vision is a continuous assessment platform that integrates with the customer's IdP and CASB to dynamically adjust access policies as their SaaS portfolio changes. New shadow IT app detected? Policy engine automatically classifies it and routes it through Secure Browser. That's the product — this tool is the 'working backwards' artifact that proves the concept."
+
+**"How do you know your risk scores are accurate?"**
+"I don't, and that's intentional. The v1 scores are based on publicly documented app capabilities. In a real product, I'd validate with 5-10 enterprise customers in a closed beta, iterate on the weighting model, and eventually incorporate CASB telemetry for data-driven scoring. But the framework — scoring exfiltration vectors and mapping them to product tiers — that's the durable insight."
+
+**"We already have solutions architects who do this work with customers."**
+"Exactly. And they're a scarce, expensive resource. This tool doesn't replace SAs — it scales them. An SA can use this in a customer meeting to generate the initial assessment in real-time, then go deep on the nuances. Or a customer can self-serve the initial analysis and bring the output to the SA conversation, which means the SA spends time on architecture, not data gathering. One PeerSpot user review literally said 'There could be an end-to-end tool that helps from assessment to migration' for WorkSpaces."
+
+**"Why didn't you just build an AI chatbot?"**
+"Because the CISO doesn't want a conversation — they want a document. AI chatbots are great for exploration, but enterprise procurement requires structured, auditable artifacts. A chat transcript isn't something you attach to a purchase order. A Secure Access Blueprint is. That said, AWS is investing in AI for WorkSpaces support — they published a Bedrock Agents architecture for WorkSpaces helpdesks in June 2025. An AI agent could be the input layer that collects information conversationally and then feeds it into a structured assessment like this one. That's the v3 vision."
+
+**"Microsoft Defender already catalogs 31,000 apps. Why would a customer use your 150-app tool?"**
+"Different purpose. Defender answers 'what apps do I have?' My tool answers 'what should I do about them with WorkSpaces?' A customer would use Defender for discovery, then use this tool for product selection. In fact, the ideal flow is: Defender discovers 500 apps → customer exports the list → this tool ingests it → outputs a WorkSpaces deployment plan. We're downstream of Defender, not competing with it."
+
+**"What would you do in the first 90 days in this role?"**
+"Three things. First, I'd validate this hypothesis with 5 actual customers — do they struggle with the product selection problem the way I think they do? I'd specifically ask customers who evaluated WorkSpaces but didn't buy, and customers who bought but underutilized. Second, I'd map the existing sales process to identify where this kind of tool would have the highest conversion impact — is it in the first SA call, the proof-of-concept phase, or the procurement approval stage? Third, I'd work with the Secure Browser engineering team to understand what first-party data we could use to make the policy engine smarter — usage telemetry, session patterns, DLP event logs. The goal is to move from a static assessment to a dynamic, data-driven recommendation engine."
+
+**"How does this help us compete with AVD, which has 62% enterprise adoption?"**
+"AVD wins in Microsoft-heavy shops because of licensing advantages — customers already paying for M365 get AVD at marginal cost. We can't out-Microsoft Microsoft. But here's what AVD doesn't have: a $7/mo secure browser tier for web-only access. Most enterprises have a mix of users — some need full desktops, many just need secure web access. AVD forces you into full VDI pricing for everyone. WorkSpaces lets you tier it: $7 for web workers, $25-35 for power users. This tool makes that tiering advantage visible and quantified. That's how you win the deals AVD would otherwise take — not on features, but on cost optimization."
